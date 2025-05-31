@@ -306,10 +306,14 @@ class _HomePageState extends State<HomePage> {
         height: 45,
         width: 105,
         child: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(
+          onPressed: () async {
+            await Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (context) => AddToDoScreen()));
+            setState(() {
+              todos.clear();
+              todos.addAll(HiveHelper.getAllTodo());
+            });
           },
           child: Container(
             width: 85,
