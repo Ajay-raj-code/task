@@ -2,10 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/Database/HiveHelper.dart';
 import 'package:todo/provider/TodoFilterNotifier.dart';
 import 'package:todo/utility/Constant.dart';
 import 'package:todo/utility/CustomList.dart';
+import 'package:todo/utility/Notification.dart';
 
 class AddToDoScreen extends StatefulWidget {
   const AddToDoScreen({super.key});
@@ -21,6 +23,14 @@ class _AddToDoScreenState extends State<AddToDoScreen> {
   final TextEditingController _descriptionController = TextEditingController();
 
   final _formkey = GlobalKey<FormState>();
+  CustomScheduleNotification notificationHelper = CustomScheduleNotification();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    notificationHelper.initializeNotification();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +58,38 @@ class _AddToDoScreenState extends State<AddToDoScreen> {
                   datetime: datetime,
                   status: Status.pending.toString(),
                 );
-                await HiveHelper.createTodo(todo);
+                int? key = await HiveHelper.createTodo(todo);
+
+                print(key);
+                Duration duration = datetime.difference(DateTime.now());
+                print(duration);
+                if(!duration.isNegative){
+                  await notificationHelper.showNotification(key: key!, title: title, description: description, duration: duration, key_todo: key.toString());
+
+                }
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.grey.shade700.withAlpha(160),
+                    behavior:
+                    SnackBarBehavior
+                        .floating,
+                    margin:
+                    EdgeInsets.all(
+                      16,
+                    ),
+                    duration: Duration(
+                      seconds: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    content:Text(
+                      'Task is created',
+                    ),
+                  ),
+                );
                 context.read<TodoFilterNotifier>().setFilterCategory(
                   FilterCategory.all,
                 );
@@ -174,10 +215,13 @@ class _AddToDoScreenState extends State<AddToDoScreen> {
                       focusedErrorBorder: CustomConstant.border,
                     ),
                   ),
+
                 ],
               ),
             ),
           ),
+
+
         ],
       ),
     );

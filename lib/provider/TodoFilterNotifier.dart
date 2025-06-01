@@ -3,7 +3,7 @@ import 'package:todo/utility/CustomList.dart';
 
 
 class TodoFilterNotifier extends ChangeNotifier{
-    FilterCategory _filterCategory = FilterCategory.completed;
+    FilterCategory _filterCategory = FilterCategory.all;
     void setFilterCategory(FilterCategory category){
       _filterCategory =category;
       notifyListeners();

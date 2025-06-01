@@ -6,26 +6,35 @@ import 'package:todo/provider/StatusNotifier.dart';
 import 'package:todo/provider/ThemeChangeNotifier.dart';
 import 'package:todo/provider/TodoFilterNotifier.dart';
 import 'package:todo/utility/CustomList.dart';
+import 'package:todo/utility/Notification.dart';
 
 import 'Database/HiveHelper.dart';
 import 'Pages/AddToDo.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(ToDoAdapter());
   await Hive.openBox<ToDo>("Todobox");
-  runApp(MyApp());
+
+
+  final notification = CustomScheduleNotification();
+  await notification.requestPermission();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  MyApp({super.key});
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
+
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -38,6 +47,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context) {
           final themeChanger = Provider.of<ThemeChangeNotifier>(context);
           return MaterialApp(
+            navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             title: 'ToDo',
             themeMode: themeChanger.themeMode,
@@ -62,7 +72,7 @@ class _MyAppState extends State<MyApp> {
                 secondaryContainer: Colors.grey.shade700,
               ),
             ),
-            home: HomePage(),
+            home:const HomePage(),
           );
         },
       ),
@@ -71,7 +81,7 @@ class _MyAppState extends State<MyApp> {
 }
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -200,34 +210,45 @@ class _HomePageState extends State<HomePage> {
                                         MainAxisAlignment.spaceBetween,
 
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            todo[index]["title"],
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(right: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                todo[index]["title"],
+                                                maxLines: 1,
+                                                overflow: TextOverflow.fade,
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                              Text(
+                                                todo[index]["description"],
+                                                maxLines: 4,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.justify,
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+
+                                                ),
+                                              ),
+                                              Text(
+                                                DateFormat('dd MMM yyyy, h:mm a')
+                                                    .format(todo[index]["datetime"])
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          Text(
-                                            todo[index]["description"],
-                                            style: const TextStyle(
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          Text(
-                                            DateFormat('dd MMM yyyy, h:mm a')
-                                                .format(todo[index]["datetime"])
-                                                .toString(),
-                                            style: const TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                       Container(
                                         width: 80,
@@ -249,6 +270,29 @@ class _HomePageState extends State<HomePage> {
                                                           todo[index]["key"],
                                                           Status.completed,
                                                         );
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            backgroundColor: Colors.grey.shade700.withAlpha(160),
+                                                            behavior:
+                                                                SnackBarBehavior
+                                                                    .floating,
+                                                            margin:
+                                                                EdgeInsets.all(
+                                                                  16,
+                                                                ),
+                                                            duration: Duration(
+                                                              seconds: 1,
+                                                            ),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                            ),
+                                                            content:Text(
+                                                              'Task is completed',
+                                                            ),
+                                                          ),
+                                                        );
                                                         statusNotifier
                                                             .setStatus(
                                                               Status.completed,
@@ -265,10 +309,32 @@ class _HomePageState extends State<HomePage> {
                                                     ),
                                                     GestureDetector(
                                                       onTap: () async {
-                                                        var result =
                                                             await HiveHelper.deleteTodo(
                                                               todo[index]["key"],
                                                             );
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            backgroundColor: Colors.grey.shade700.withAlpha(160),
+                                                            behavior:
+                                                            SnackBarBehavior
+                                                                .floating,
+                                                            margin:
+                                                            EdgeInsets.all(
+                                                              16,
+                                                            ),
+                                                            duration: Duration(
+                                                              seconds: 1,
+                                                            ),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                            ),
+                                                            content:Text(
+                                                              'Task is deleted',
+                                                            ),
+                                                          ),
+                                                        );
                                                         statusNotifier
                                                             .setStatus(
                                                               Status.deleted,

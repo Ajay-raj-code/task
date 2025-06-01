@@ -27,8 +27,22 @@ class ToDo extends HiveObject {
 
 class HiveHelper {
   static final hiveBox = Hive.box<ToDo>("Todobox");
+
+  static bool isInitialized = false;
+
+  static Future<void> init() async {
+    if (!isInitialized) {
+      await Hive.initFlutter();
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(ToDoAdapter());
+      }
+      await Hive.openBox<ToDo>('Todobox');
+      isInitialized = true;
+    }
+  }
+
   static createTodo(ToDo todo) async {
-    await hiveBox.add(todo);
+   return await hiveBox.add(todo);
   }
 
   static dynamic getAllTodo() {
